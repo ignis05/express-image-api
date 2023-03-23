@@ -16,6 +16,8 @@ class ImageDb {
 		if (!this.isReady) fs.openSync(dbPath, 'w')
 
 		this.db = new sqlite3.Database(dbPath)
+
+		this.downloadImage = this.downloadImage.bind(this) // keeps context when called from processqueue
 	}
 
 	// initialises tables if db was freshly created
@@ -71,11 +73,7 @@ class ImageDb {
 			const fileFormat = url.split('.').at(-1)
 			const path = `./downloads/${item.id}.${fileFormat}`
 
-			const res = await Axios({
-				url,
-				method: 'GET',
-				responseType: 'stream',
-			})
+			const res = await Axios({ url, method: 'GET', responseType: 'stream' })
 
 			res.data
 				.pipe(fs.createWriteStream(path))
