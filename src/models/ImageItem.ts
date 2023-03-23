@@ -5,3 +5,5 @@ interface ImageItem {
 	date_added: number
 	date_downloaded: number
 }
+
+export type { ImageItem }

@@ -5,7 +5,7 @@ import { QueueItem } from '../models/QueueItem'
 
 const imageDir = './downloads/'
 const dbPath = './database/test-apq-w-download-images.sqlite'
-const db = new ImageDb(dbPath)
+const db = new ImageDb(dbPath, imageDir)
 const queuePath = './database/test-apq-w-download-queue.sqlite'
 const q = new AutoProcessQueue(queuePath, () => new Promise<void>((res) => res()))
 

@@ -1,15 +1,19 @@
 import sqlite3 from 'sqlite3'
 import fs from 'fs'
+import path from 'path'
 import { QueueItem } from '../models/QueueItem'
+import { ImageItem } from '../models/ImageItem'
 import Axios from 'axios'
 
 class ImageDb {
 	dbPath: string
+	imageDir: string
 	db: sqlite3.Database
 	isReady: boolean
 
-	constructor(dbPath: string) {
+	constructor(dbPath: string, imageDir: string) {
 		this.dbPath = dbPath
+		this.imageDir = imageDir
 
 		// check if db file exists, create it if not
 		this.isReady = fs.existsSync(dbPath)
@@ -71,16 +75,16 @@ class ImageDb {
 		return new Promise<void>(async (resolve, reject) => {
 			const url = item.url
 			const fileFormat = url.split('.').at(-1)
-			const path = `./downloads/${item.id}.${fileFormat}`
+			const dlPath = path.join(this.imageDir, `${item.id}.${fileFormat}`)
 
 			const res = await Axios({ url, method: 'GET', responseType: 'stream' })
 
 			res.data
-				.pipe(fs.createWriteStream(path))
+				.pipe(fs.createWriteStream(dlPath))
 				.on('error', reject)
 				.once('close', async () => {
 					// todo: replace path with server url
-					await this.insert({ id: item.id, source_url: url, local_url: path, date_added: item.date_queued, date_downloaded: Date.now() })
+					await this.insert({ id: item.id, source_url: url, local_url: dlPath, date_added: item.date_queued, date_downloaded: Date.now() })
 					resolve()
 				})
 		})
