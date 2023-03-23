@@ -104,6 +104,15 @@ class ImageDb {
 			})
 		})
 	}
+
+	getListPart(limit: number, offset: number) {
+		return new Promise<ImageItem[]>((resolve, reject) => {
+			this.db.all('SELECT * FROM images LIMIT ? OFFSET ?', [limit, offset], function (err, items: ImageItem[]) {
+				if (err) return reject(err)
+				resolve(items)
+			})
+		})
+	}
 }
 
 export { ImageDb }

@@ -41,16 +41,34 @@ app.get('/check/:id', async (req, res) => {
 	return res.status(404).send('No image with matching id found')
 })
 
+// adds new image to download queue
 app.post('/add', async (req, res) => {
 	const url: string | undefined = req.body.url
 	if (!url) return res.status(400).send('No url in request body')
 
 	const id = Md5.hashStr(url)
 
-	//? only add if image with this source url isn't already in queue/database. If image is already known, skip to sending check url
+	//? Allow adding duplicate images? Currently only unique urls are allowed, if image is already in queue/database, api skips to sending /check link
 	if (!(await imageDB.getById(id)) && !(await processQueue.getById(id))) await processQueue.addItem({ id, url, date_queued: Date.now() })
 
 	res.status(201).send({ check_url: `/check/${id}` })
+})
+
+// gets list of images, limited by count and offset
+app.get('/list', async (req, res) => {
+	let qCount = req.query.count
+	let qOffset = req.query.offset
+
+	// assing count and offset from querystring, if they are valid numbers
+	let count = 5
+	if (typeof qCount == 'string' && !isNaN(parseInt(qCount))) count = parseInt(qCount)
+	let offset = 0
+	if (typeof qOffset == 'string' && !isNaN(parseInt(qOffset))) offset = parseInt(qOffset)
+
+	//? API allows to fetch whole databse at once, a potential upper limit on count might be warranted, but nothing was specified
+
+	let listPart = await imageDB.getListPart(count, offset)
+	res.status(200).send({ requestedCount: count, offset: offset, actualCount: listPart.length, images: listPart })
 })
 
 // init databases and launch server
