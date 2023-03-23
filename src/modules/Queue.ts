@@ -59,15 +59,32 @@ class Queue {
 
 	// returns first item from queue, removing it from the queue. Returns null if queue is empty
 	popItem() {
+		return new Promise<QueueItem | null>(async (resolve, reject) => {
+			let item = await this.getItem()
+
+			if (!item) return resolve(null)
+
+			await this.removeByID(item.id)
+			resolve(item)
+		})
+	}
+
+	// returns first item from queue, or null if queue is empty
+	getItem() {
 		return new Promise<QueueItem | null>((resolve, reject) => {
-			const db = this.db
-			db.get('SELECT * FROM queue LIMIT 1', function (err, item: QueueItem | undefined) {
+			this.db.get('SELECT * FROM queue LIMIT 1', function (err, item: QueueItem | undefined) {
 				if (err) return reject(err)
 				if (!item) return resolve(null)
-				db.all('DELETE FROM queue WHERE id=(?)', item.id, (err, rows) => {
-					if (err) return reject(err)
-					resolve(item)
-				})
+				resolve(item)
+			})
+		})
+	}
+
+	removeByID(id: string) {
+		return new Promise<void>((resolve, reject) => {
+			this.db.all('DELETE FROM queue WHERE id=(?)', id, (err, rows) => {
+				if (err) return reject(err)
+				resolve()
 			})
 		})
 	}
