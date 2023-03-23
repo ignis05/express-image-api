@@ -2,6 +2,7 @@ import express, { Express } from 'express'
 import bodyParser from 'body-parser'
 import cors from 'cors'
 import { Md5 } from 'ts-md5'
+import { URL } from 'url'
 
 import { ImageDb } from './modules/ImageDb'
 import { AutoProcessQueue } from './modules/AutoProcessQueue'
@@ -29,6 +30,8 @@ app.get('/details/:id', async (req, res) => {
 })
 
 // checks if item has been downloaded
+//? What about items that fail to download due to inaccessible url?
+//? Currently the api deletes them, but it might be more desirable to keep them in db, and this feature would send information that url could not be accessed
 app.get('/check/:id', async (req, res) => {
 	const id = req.params.id
 
@@ -45,6 +48,13 @@ app.get('/check/:id', async (req, res) => {
 app.post('/add', async (req, res) => {
 	const url: string | undefined = req.body.url
 	if (!url) return res.status(400).send('No url in request body')
+
+	// make sure url is valid, to skip saving to databases something that will fail to download anyway
+	try {
+		new URL(url)
+	} catch {
+		return res.status(400).send('Specified "url" in not a valid url string')
+	}
 
 	const id = Md5.hashStr(url)
 
@@ -75,6 +85,9 @@ app.get('/list', async (req, res) => {
 async function main() {
 	await imageDB.init()
 	await processQueue.init()
+
+	// continue downloading images that are still in the queue
+	processQueue.start()
 
 	console.log(`App running on http://localhost:${port}`)
 	app.listen(port)

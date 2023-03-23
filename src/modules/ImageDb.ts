@@ -77,7 +77,12 @@ class ImageDb {
 			const fileExt = url.split('.').at(-1) || '.png'
 			const dlPath = path.join(this.imageDir, `${item.id}.${fileExt}`)
 
-			const res = await Axios({ url, method: 'GET', responseType: 'stream' })
+			const res = await Axios({ url, method: 'GET', responseType: 'stream' }).catch((err) => {
+				console.log(`Failed to fetch image from ${url}, got error ${err.code}`)
+			})
+
+			// failed to fetch data
+			if (!res?.data) return resolve()
 
 			res.data
 				.pipe(fs.createWriteStream(dlPath))
