@@ -29,10 +29,10 @@ class AutoProcessQueue {
 	// pulls items out of queue until its empty
 	async run() {
 		// fetch all items
-		var item = await this.queue.getItem()
+		var item = await this.queue.popItem()
 		while (item) {
 			await this.forEach(item)
-			item = await this.queue.getItem()
+			item = await this.queue.popItem()
 		}
 
 		// no more items in queue

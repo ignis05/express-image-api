@@ -57,8 +57,8 @@ class Queue {
 		})
 	}
 
-	// resolves item or null if queue is empty
-	getItem() {
+	// returns first item from queue, removing it from the queue. Returns null if queue is empty
+	popItem() {
 		return new Promise<QueueItem | null>((resolve, reject) => {
 			const db = this.db
 			db.get('SELECT * FROM queue LIMIT 1', function (err, item: QueueItem | undefined) {
@@ -68,6 +68,18 @@ class Queue {
 					if (err) return reject(err)
 					resolve(item)
 				})
+			})
+		})
+	}
+
+	// returns item by its id, or null if it's not found
+	getByID(id: string) {
+		return new Promise<QueueItem | null>((resolve, reject) => {
+			const db = this.db
+			db.get('SELECT * FROM queue WHERE id=?', id, function (err, item: QueueItem | undefined) {
+				if (err) return reject(err)
+				if (!item) return resolve(null)
+				resolve(item)
 			})
 		})
 	}

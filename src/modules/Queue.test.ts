@@ -26,12 +26,12 @@ test('can add and retrieve item', async () => {
 	let res = await q.addItem(item)
 	expect(res).toEqual(true)
 
-	let item2 = await q.getItem()
+	let item2 = await q.popItem()
 	expect(item2).toEqual(item)
 })
 
 test('returns null when getting item from empty queue', async () => {
-	let item = await q.getItem()
+	let item = await q.popItem()
 	expect(item).toEqual(null)
 })
 
@@ -42,8 +42,8 @@ test('works in fifo order', async () => {
 	await q.addItem(item1)
 	await q.addItem(item2)
 
-	let res1 = await q.getItem()
-	let res2 = await q.getItem()
+	let res1 = await q.popItem()
+	let res2 = await q.popItem()
 
 	expect(res1).toEqual(item1)
 	expect(res2).toEqual(item2)
@@ -57,12 +57,12 @@ test('works with items adden in-between pulls', async () => {
 
 	await q.addItem(item1)
 	await q.addItem(item2)
-	let res1 = await q.getItem()
+	let res1 = await q.popItem()
 	await q.addItem(item3)
 	await q.addItem(item4)
-	let res2 = await q.getItem()
-	let res3 = await q.getItem()
-	let res4 = await q.getItem()
+	let res2 = await q.popItem()
+	let res3 = await q.popItem()
+	let res4 = await q.popItem()
 
 	expect(res1).toEqual(item1)
 	expect(res2).toEqual(item2)

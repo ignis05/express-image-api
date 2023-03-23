@@ -74,8 +74,8 @@ class ImageDb {
 	downloadImage(item: QueueItem) {
 		return new Promise<void>(async (resolve, reject) => {
 			const url = item.url
-			const fileFormat = url.split('.').at(-1)
-			const dlPath = path.join(this.imageDir, `${item.id}.${fileFormat}`)
+			const fileExt = url.split('.').at(-1) || '.png'
+			const dlPath = path.join(this.imageDir, `${item.id}.${fileExt}`)
 
 			const res = await Axios({ url, method: 'GET', responseType: 'stream' })
 
@@ -83,8 +83,13 @@ class ImageDb {
 				.pipe(fs.createWriteStream(dlPath))
 				.on('error', reject)
 				.once('close', async () => {
-					// todo: replace path with server url
-					await this.insert({ id: item.id, source_url: url, local_url: dlPath, date_added: item.date_queued, date_downloaded: Date.now() })
+					await this.insert({
+						id: item.id,
+						source_url: url,
+						local_url: `/image/${item.id}.${fileExt}`,
+						date_added: item.date_queued,
+						date_downloaded: Date.now(),
+					})
 					resolve()
 				})
 		})
