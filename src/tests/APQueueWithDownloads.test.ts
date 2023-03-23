@@ -41,7 +41,7 @@ test('downloads images as they are being inserted to the queue', (done) => {
 		// check if there is a file and db entry for each image
 		for (let { id } of images) {
 			expect(fs.existsSync(imageDir + id + '.png')).toBe(true)
-			expect(await db.getbyId(id)).toBeTruthy()
+			expect(await db.getById(id)).toBeTruthy()
 		}
 		done()
 	}

@@ -48,6 +48,10 @@ class AutoProcessQueue {
 			resolve()
 		})
 	}
+
+	getById(id: string) {
+		return this.queue.getByID(id)
+	}
 }
 
 export { AutoProcessQueue }

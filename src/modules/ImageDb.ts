@@ -95,7 +95,7 @@ class ImageDb {
 		})
 	}
 
-	getbyId(id: string) {
+	getById(id: string) {
 		return new Promise<ImageItem | null>((resolve, reject) => {
 			this.db.get('SELECT * FROM images WHERE id=?', id, function (err, item: ImageItem | undefined) {
 				if (err) return reject(err)

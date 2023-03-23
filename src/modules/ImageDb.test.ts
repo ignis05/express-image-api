@@ -33,6 +33,6 @@ test('downloads a file', async () => {
 
 test('writes to database after downloading', async () => {
 	await db.downloadImage({ id: 'test1-id1', url: 'https://dummyimage.com/600x400/000/fff.png', date_queued: Date.now() })
-	let item = await db.getbyId('test1-id1')
+	let item = await db.getById('test1-id1')
 	expect(item).toBeTruthy()
 })
