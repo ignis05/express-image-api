@@ -1,10 +1,6 @@
 import sqlite3 from 'sqlite3'
 import fs from 'fs'
-
-interface QueueItem {
-	id: string
-	url: string
-}
+import { QueueItem } from '../models/QueueItem'
 
 class Queue {
 	dbPath: string
@@ -56,7 +52,6 @@ class Queue {
 					console.log(err.message)
 					return resolve(false)
 				}
-				console.log(`Item was added to the queue: ${this.lastID}`)
 				resolve(true)
 			})
 		})
@@ -77,4 +72,3 @@ class Queue {
 }
 
 export { Queue }
-export type { QueueItem }
