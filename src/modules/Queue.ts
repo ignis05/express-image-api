@@ -19,15 +19,17 @@ class Queue {
 
 	// initialises tables if db was freshly created
 	init() {
-		return new Promise<void>(async (resolve) => {
+		return new Promise<void>(async (resolve, reject) => {
 			if (this.isReady) return resolve()
 
-			this.db.run(
+			this.db.all(
 				`CREATE TABLE queue (
-          id VARCHAR(50) NOT NULL PRIMARY KEY,
-          url VARCHAR(255) NOT NULL
-          )`,
-				(err) => {
+						id VARCHAR(50) NOT NULL PRIMARY KEY,
+						url VARCHAR(255) NOT NULL,
+						date_queued INTEGER NOT NULL
+						)`,
+				(err, rows) => {
+					if (err) return reject(err)
 					this.isReady = true
 					resolve()
 				}
@@ -37,21 +39,19 @@ class Queue {
 
 	// deletes everything from queue
 	wipe() {
-		return new Promise<void>(async (resolve) => {
-			this.db.run(`DELETE FROM queue`, function (err) {
+		return new Promise<void>(async (resolve, reject) => {
+			this.db.all(`DELETE FROM queue`, (err, rows) => {
+				if (err) return reject(err)
 				resolve()
 			})
 		})
 	}
 
-	// resolves false if db insert fails
+	// inserts item to db
 	addItem(item: QueueItem) {
-		return new Promise<boolean>((resolve) => {
-			this.db.run(`INSERT INTO queue VALUES (?,?)`, [item.id, item.url], function (err) {
-				if (err) {
-					console.log(err.message)
-					return resolve(false)
-				}
+		return new Promise<boolean>((resolve, reject) => {
+			this.db.all(`INSERT INTO queue VALUES (?,?,?)`, [item.id, item.url, item.date_queued], (err, rows) => {
+				if (err) return reject(err)
 				resolve(true)
 			})
 		})
@@ -59,11 +59,13 @@ class Queue {
 
 	// resolves item or null if queue is empty
 	getItem() {
-		return new Promise<QueueItem | null>((resolve) => {
+		return new Promise<QueueItem | null>((resolve, reject) => {
 			const db = this.db
 			db.get('SELECT * FROM queue LIMIT 1', function (err, item: QueueItem | undefined) {
+				if (err) return reject(err)
 				if (!item) return resolve(null)
-				db.run('DELETE FROM queue WHERE id=(?)', item.id, function (err) {
+				db.all('DELETE FROM queue WHERE id=(?)', item.id, (err, rows) => {
+					if (err) return reject(err)
 					resolve(item)
 				})
 			})
