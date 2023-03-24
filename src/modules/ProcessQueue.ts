@@ -5,10 +5,10 @@ import { QueueItem } from '../models/QueueItem'
 type forEachFunc = (item: QueueItem) => Promise<void>
 
 class ProcessQueue {
-	dbPath: string
-	db: sqlite3.Database
-	isReady: boolean
-	isRunning = false // true if loop is pulling all items, prevents parallel runs
+	readonly dbPath: string
+	private db: sqlite3.Database
+	private isStructureCreated: boolean // used to decide if table structure needs to be created
+	private isRunning = false // true if loop is pulling all items, prevents parallel runs
 	forEach: forEachFunc | undefined // function called for each pulled item
 	done: (() => void) | undefined // function called when all items are processed
 
@@ -16,8 +16,8 @@ class ProcessQueue {
 		this.dbPath = dbPath
 
 		// check if db file exists, create it if not
-		this.isReady = fs.existsSync(dbPath)
-		if (!this.isReady) fs.openSync(dbPath, 'w')
+		this.isStructureCreated = fs.existsSync(dbPath)
+		if (!this.isStructureCreated) fs.openSync(dbPath, 'w')
 
 		this.db = new sqlite3.Database(dbPath)
 	}
@@ -25,7 +25,7 @@ class ProcessQueue {
 	// initialises tables if db was freshly created
 	init() {
 		return new Promise<void>(async (resolve, reject) => {
-			if (this.isReady) return resolve()
+			if (this.isStructureCreated) return resolve()
 
 			this.db.all(
 				`CREATE TABLE queue (
@@ -35,10 +35,19 @@ class ProcessQueue {
 						)`,
 				(err, rows) => {
 					if (err) return reject(err)
-					this.isReady = true
+					this.isStructureCreated = true
 					resolve()
 				}
 			)
+		})
+	}
+
+	// closes db connection
+	close() {
+		return new Promise<void>(async (resolve) => {
+			this.db.close(() => {
+				resolve()
+			})
 		})
 	}
 

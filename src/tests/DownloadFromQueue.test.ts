@@ -18,15 +18,12 @@ beforeAll(async () => {
 })
 
 // close databases and clear files
-afterAll((done) => {
+afterAll(async () => {
 	for (let file of fs.readdirSync(imageDir)) if (file.startsWith('test2-')) fs.unlinkSync(imageDir + file)
-	q.db.close(() => {
-		fs.unlinkSync(queuePath)
-		db.db.close(() => {
-			fs.unlinkSync(dbPath)
-			done()
-		})
-	})
+	await q.close()
+	fs.unlinkSync(queuePath)
+	await db.close()
+	fs.unlinkSync(dbPath)
 })
 
 test('downloads images as they are being inserted to the queue', (done) => {

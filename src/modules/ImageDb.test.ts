@@ -17,11 +17,9 @@ afterEach(async () => {
 	for (let file of fs.readdirSync(imageDir)) if (file.startsWith('test1-')) fs.unlinkSync(imageDir + file)
 })
 
-afterAll((done) => {
-	db.db.close(() => {
-		fs.unlinkSync(dbPath)
-		done()
-	})
+afterAll(async () => {
+	await db.close()
+	fs.unlinkSync(dbPath)
 })
 
 test('downloads a file', async () => {

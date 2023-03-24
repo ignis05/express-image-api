@@ -14,11 +14,9 @@ afterEach(async () => {
 	await q.wipe()
 })
 
-afterAll((done) => {
-	q.db.close(() => {
-		fs.unlinkSync(dbPath)
-		done()
-	})
+afterAll(async () => {
+	await q.close()
+	fs.unlinkSync(dbPath)
 })
 
 test('can add and retrieve item', async () => {

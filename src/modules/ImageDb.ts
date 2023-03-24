@@ -6,18 +6,18 @@ import { ImageItem } from '../models/ImageItem'
 import Axios from 'axios'
 
 class ImageDb {
-	dbPath: string
-	imageDir: string
-	db: sqlite3.Database
-	isReady: boolean
+	readonly dbPath: string
+	readonly imageDir: string
+	private db: sqlite3.Database
+	private isStructureCreated: boolean // used to decide if table structure needs to be created
 
 	constructor(dbPath: string, imageDir: string) {
 		this.dbPath = dbPath
 		this.imageDir = imageDir
 
 		// check if db file exists, create it if not
-		this.isReady = fs.existsSync(dbPath)
-		if (!this.isReady) fs.openSync(dbPath, 'w')
+		this.isStructureCreated = fs.existsSync(dbPath)
+		if (!this.isStructureCreated) fs.openSync(dbPath, 'w')
 
 		this.db = new sqlite3.Database(dbPath)
 
@@ -27,7 +27,7 @@ class ImageDb {
 	// initialises tables if db was freshly created
 	init() {
 		return new Promise<void>(async (resolve, reject) => {
-			if (this.isReady) return resolve()
+			if (this.isStructureCreated) return resolve()
 
 			this.db.all(
 				`CREATE TABLE images (
@@ -39,10 +39,19 @@ class ImageDb {
           )`,
 				(err, rows) => {
 					if (err) return reject(err)
-					this.isReady = true
+					this.isStructureCreated = true
 					resolve()
 				}
 			)
+		})
+	}
+
+	// closes db connection
+	close() {
+		return new Promise<void>(async (resolve) => {
+			this.db.close(() => {
+				resolve()
+			})
 		})
 	}
 
