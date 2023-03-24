@@ -5,12 +5,13 @@ import { Md5 } from 'ts-md5'
 import { URL } from 'url'
 
 import { ImageDb } from './modules/ImageDb'
-import { AutoProcessQueue } from './modules/AutoProcessQueue'
+import { ProcessQueue } from './modules/ProcessQueue'
 
 const port = 3000
 
 const imageDB = new ImageDb('../database/images.sqlite', '../downloads/')
-const processQueue = new AutoProcessQueue('../database/queue.sqlite', imageDB.downloadImage)
+const processQueue = new ProcessQueue('../database/queue.sqlite')
+processQueue.forEach = imageDB.downloadImage // trigger image download method for each item pulled from queue
 
 const app: Express = express()
 app.use(cors())
@@ -59,7 +60,7 @@ app.post('/add', async (req, res) => {
 	const id = Md5.hashStr(url)
 
 	//? Allow adding duplicate images? Currently only unique urls are allowed, if image is already in queue/database, api skips to sending /check link
-	if (!(await imageDB.getById(id)) && !(await processQueue.getById(id))) await processQueue.addItem({ id, url, date_queued: Date.now() })
+	if (!(await imageDB.getById(id)) && !(await processQueue.getById(id))) await processQueue.enqueue({ id, url, date_queued: Date.now() })
 
 	res.status(201).send({ check_url: `/check/${id}` })
 })
@@ -87,7 +88,7 @@ async function main() {
 	await processQueue.init()
 
 	// continue downloading images that are still in the queue
-	processQueue.start()
+	processQueue.processItems()
 
 	console.log(`App running on http://localhost:${port}`)
 	app.listen(port)

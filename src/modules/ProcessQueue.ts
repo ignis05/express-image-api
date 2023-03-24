@@ -2,10 +2,15 @@ import sqlite3 from 'sqlite3'
 import fs from 'fs'
 import { QueueItem } from '../models/QueueItem'
 
-class Queue {
+type forEachFunc = (item: QueueItem) => Promise<void>
+
+class ProcessQueue {
 	dbPath: string
 	db: sqlite3.Database
 	isReady: boolean
+	isRunning = false // true if loop is pulling all items, prevents parallel runs
+	forEach: forEachFunc | undefined // function called for each pulled item
+	done: (() => void) | undefined // function called when all items are processed
 
 	constructor(dbPath: string) {
 		this.dbPath = dbPath
@@ -48,7 +53,7 @@ class Queue {
 	}
 
 	// inserts item to db
-	addItem(item: QueueItem) {
+	insertToDb(item: QueueItem) {
 		return new Promise<boolean>((resolve, reject) => {
 			this.db.all(`INSERT INTO queue VALUES (?,?,?)`, [item.id, item.url, item.date_queued], (err, rows) => {
 				if (err) return reject(err)
@@ -57,20 +62,30 @@ class Queue {
 		})
 	}
 
+	// removes item from db
+	deleteFromDb(id: string) {
+		return new Promise<void>((resolve, reject) => {
+			this.db.all('DELETE FROM queue WHERE id=(?)', id, (err, rows) => {
+				if (err) return reject(err)
+				resolve()
+			})
+		})
+	}
+
 	// returns first item from queue, removing it from the queue. Returns null if queue is empty
-	popItem() {
+	popFirst() {
 		return new Promise<QueueItem | null>(async (resolve, reject) => {
-			let item = await this.getItem()
+			let item = await this.getFirst()
 
 			if (!item) return resolve(null)
 
-			await this.removeByID(item.id)
+			await this.deleteFromDb(item.id)
 			resolve(item)
 		})
 	}
 
 	// returns first item from queue, or null if queue is empty
-	getItem() {
+	getFirst() {
 		return new Promise<QueueItem | null>((resolve, reject) => {
 			this.db.get('SELECT * FROM queue LIMIT 1', function (err, item: QueueItem | undefined) {
 				if (err) return reject(err)
@@ -80,17 +95,8 @@ class Queue {
 		})
 	}
 
-	removeByID(id: string) {
-		return new Promise<void>((resolve, reject) => {
-			this.db.all('DELETE FROM queue WHERE id=(?)', id, (err, rows) => {
-				if (err) return reject(err)
-				resolve()
-			})
-		})
-	}
-
 	// returns item by its id, or null if it's not found
-	getByID(id: string) {
+	getById(id: string) {
 		return new Promise<QueueItem | null>((resolve, reject) => {
 			const db = this.db
 			db.get('SELECT * FROM queue WHERE id=?', id, function (err, item: QueueItem | undefined) {
@@ -100,6 +106,39 @@ class Queue {
 			})
 		})
 	}
+
+	// starts autoqueue, makes sure it won't be duplicated if already running
+	processItems() {
+		if (!this.isRunning) {
+			this.isRunning = true
+			this.pullLoop()
+		}
+	}
+
+	// pulls items out of queue until its empty
+	private async pullLoop() {
+		// fetch all items
+		var item = await this.getFirst()
+		while (item) {
+			if (this.forEach) await this.forEach(item)
+			await this.deleteFromDb(item.id)
+
+			item = await this.getFirst()
+		}
+
+		// no more items in queue
+		this.done?.()
+		this.isRunning = false
+	}
+
+	// adds item to the queue. starts processing unless disabled with argument
+	enqueue(item: QueueItem, startProcessing = true) {
+		return new Promise<void>(async (resolve) => {
+			await this.insertToDb(item)
+			if (startProcessing) this.processItems()
+			resolve()
+		})
+	}
 }
 
-export { Queue }
+export { ProcessQueue }

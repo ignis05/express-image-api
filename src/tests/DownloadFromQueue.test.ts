@@ -1,26 +1,26 @@
-import { AutoProcessQueue } from '../modules/AutoProcessQueue'
-import { ImageDb } from '../modules/ImageDb'
 import fs from 'fs'
+import { ProcessQueue } from '../modules/ProcessQueue'
+import { ImageDb } from '../modules/ImageDb'
 import { QueueItem } from '../models/QueueItem'
 
 const imageDir = './downloads/'
 const dbPath = './database/test-apq-w-download-images.sqlite'
 const db = new ImageDb(dbPath, imageDir)
 const queuePath = './database/test-apq-w-download-queue.sqlite'
-const q = new AutoProcessQueue(queuePath, () => new Promise<void>((res) => res()))
+const q = new ProcessQueue(queuePath)
 
 beforeAll(async () => {
 	await db.init()
 	await db.wipe()
 	await q.init()
-	await q.queue.wipe()
+	await q.wipe()
 	for (let file of fs.readdirSync(imageDir)) if (file.startsWith('test2-')) fs.unlinkSync(imageDir + file)
 })
 
 // close databases and clear files
 afterAll((done) => {
 	for (let file of fs.readdirSync(imageDir)) if (file.startsWith('test2-')) fs.unlinkSync(imageDir + file)
-	q.queue.db.close(() => {
+	q.db.close(() => {
 		fs.unlinkSync(queuePath)
 		db.db.close(() => {
 			fs.unlinkSync(dbPath)
@@ -48,7 +48,7 @@ test('downloads images as they are being inserted to the queue', (done) => {
 
 	q.forEach = db.downloadImage
 
-	q.addItem(images[0])
-	q.addItem(images[1])
-	q.addItem(images[2])
+	q.enqueue(images[0])
+	q.enqueue(images[1])
+	q.enqueue(images[2])
 }, 10000)
