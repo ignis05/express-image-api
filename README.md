@@ -3,7 +3,7 @@
 ## Uruchamianie
 
 Najpierw należy pobrać pakiety poleceniem `npm i`.  
-Następnie program można uruchomić kompilując typescript poleceniem `npm run build`, przechodząc do folderu `dist` i uruchamiając plik wejściowy przez `node index.js`.  
+Następnie program można skompilować i uruchomić poleceniem `npm run build-and-run`.  
 Alternatywnie, program można uruchomić od razu poleceniem `npm run start`, jednak wymaga to posiadania zainstalowanego globalnie pakietu `ts-node`.
 
 Program uruchamia się na porcie 3000, w przypadku konieczności zmiany portu należy zmodyfikować zmienną `const port` na początku pliku `index.ts`.
@@ -22,7 +22,7 @@ Program uruchamia się na porcie 3000, w przypadku konieczności zmiany portu na
 - `ProcessQueue.ts` - plik obsługujący kolejkę zadań. Operuje na własnej bazie danych, automatycznie wyciąga swoją zawartość element po elemencie, wywołuje dla każdego z nich ustawioną funkcję, po czym usuwa z kolejki.
 - `ImageDB.ts`- plik obsługujący bazę danych obrazków. Operuje na bazie oddzielnej od bazy wykorzystywanej przez kolejkę, ze względu na potencjalny rozmiar tej bazy i potrzebę zastosowania innych rozwiązań przy dużej skali. Posiada metodę, która na podstawie url pobiera obrazek na dysk oraz dodaje jego detale do swojej bazy. Metoda ta jest podawano do kolejki procesu, jako funkcja dla każdego elementu.
 - folder `models` zawiera dwa interfejsy reprezentujące obrazek oczekujący na pobranie (zawiera tylko url źródła i datę dodania) oraz pobrany obrazek ze wszystkimi informacjami zwracanymi przez endpoint "/details"
-- dodatkowo jest też w projekcie kilka plików `.test.js`, zawierających testy dla frameworka `jest`. Nie są one wyczerpującymi testami funkcjonalności, jedynie kilkoma prostymi testami na potrzeby sprawdzenia działania poszczególnych komponentów na wczesnym etapie pisania aplikacji, jednak nie widzę potrzeby, żeby je usuwać, mimo braku wymagania ich w specyfikacji. Testy tworzą i usuwają własne pliki baz danych, w celu nieingerowania w rzeczywiste bazy oraz umożliwienia równoległego uruchomiania różnych testów.
+- dodatkowo jest też w projekcie kilka plików `.test.js`, zawierających testy dla frameworka `jest`, napisane na potrzeby sprawdzenia podstawowego działania komponentów na wczesnym etapie tworzenia aplikacji.
 
 Aplikacja obsługuje błędy związane z celowym lub przypadkowym wprowadzaniem błędnych danych w zapytaniach, błędy związane z niepowodzeniem zapytań, oraz inne błędy mogące wystąpić przy jej poprawnym funkcjonowaniu.  
 Aplikacja nie obsługuje bezpośrednio wyjątków, które sugerują błędy w jej własnym działaniu (np. wystąpienie błędu sql o zduplikowanym indeksie jest możliwe tylko wtedy, jeśli kod w index.ts weryfikujący otrzymane dane nie działa poprawnie, więc wystąpienie takiego błędu nie jest dodatkowo obsługiwane przy samym zapytaniu).
