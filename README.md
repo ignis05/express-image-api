@@ -4,8 +4,8 @@
 
 Najpierw należy pobrać pakiety poleceniem `npm i`.  
 Następnie program można uruchomić kompilując typescript poleceniem `npm run build`, przechodząc do folderu `dist` i uruchamiając plik wejściowy przez `node index.js`.  
-Alternatywnie, program można uruchomić od razu poleceniem `npm run start`, jednak wymaga to posiadania zainstalowanego globalnie pakietu `ts-node`.  
-  
+Alternatywnie, program można uruchomić od razu poleceniem `npm run start`, jednak wymaga to posiadania zainstalowanego globalnie pakietu `ts-node`.
+
 Program uruchamia się na porcie 3000, w przypadku konieczności zmiany portu należy zmodyfikować zmienną `const port` na początku pliku `index.ts`.
 
 ## API
@@ -19,8 +19,8 @@ Program uruchamia się na porcie 3000, w przypadku konieczności zmiany portu na
 ## Struktura aplikacji
 
 - `index.ts` - wejściowy plik aplikacji, skupiający się na serwerze http
-- `Queue.ts` oraz `ImageDB.ts` - oba pliki skupiają się na obsłudze baz danych. Obydwie bazy są w tej implementacji bazami sqlite3. Bazy mogłby zostać połączone w jedną, ale uznałem, że pozostawienie ich osobno umożliwia docelowo migracje w inne miejsca bazy obrazków, która po czasie może być ogromna, oraz bazy procesów, używanej jedynie do zapewnienia odporności na restarty aplikacji. Klasa w pliku `ImageDB.ts` zawiera metodę pozwalającą na bezpośrednie pobranie obrazka z internetu i zapisanie go na dysku oraz w bazie.
-- `AutoProcessQueue.ts` - zawiera klasę, która wykorzystuje `Queue.ts` do implementacji automatycznej kolejki zadań. Kolejka po uruchomieniu wyciąga po jednym elemencie z kolejki i uruchamia na nim metodę do pobierania obrazków z `ImageDB.ts`. Automatyczne wyciąganie działa aż do opróżnienia kolejki i jest na nowo uruchamiane przy włożeniu elementu do pustej kolejki.
+- `ProcessQueue.ts` - plik obsługujący kolejkę zadań. Operuje na własnej bazie danych, automatycznie wyciąga swoją zawartość element po elemencie, wywołuje dla każdego z nich ustawioną funkcję, po czym usuwa z kolejki.
+- `ImageDB.ts`- plik obsługujący bazę danych obrazków. Operuje na bazie oddzielnej od bazy wykorzystywanej przez kolejkę, ze względu na potencjalny rozmiar tej bazy i potrzebę zastosowania innych rozwiązań przy dużej skali. Posiada metodę, która na podstawie url pobiera obrazek na dysk oraz dodaje jego detale do swojej bazy. Metoda ta jest podawano do kolejki procesu, jako funkcja dla każdego elementu.
 - folder `models` zawiera dwa interfejsy reprezentujące obrazek oczekujący na pobranie (zawiera tylko url źródła i datę dodania) oraz pobrany obrazek ze wszystkimi informacjami zwracanymi przez endpoint "/details"
 - dodatkowo jest też w projekcie kilka plików `.test.js`, zawierających testy dla frameworka `jest`. Nie są one wyczerpującymi testami funkcjonalności, jedynie kilkoma prostymi testami na potrzeby sprawdzenia działania poszczególnych komponentów na wczesnym etapie pisania aplikacji, jednak nie widzę potrzeby, żeby je usuwać, mimo braku wymagania ich w specyfikacji. Testy tworzą i usuwają własne pliki baz danych, w celu nieingerowania w rzeczywiste bazy oraz umożliwienia równoległego uruchomiania różnych testów.
 
